@@ -14,13 +14,25 @@ import logsRouter from "./routes/logs";
 
 const app = express();
 
+// ✅ Lista de origens permitidas (inclui localhost e Netlify)
+const allowedOrigins = ["http://localhost:3001", "https://advotec.netlify.app"];
+
+// ✅ Middleware CORS configurado para aceitar origens definidas acima
 app.use(
   cors({
-    origin: "http://localhost:3001",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // use true apenas se houver cookies/autenticação
   })
 );
 
 app.use(express.json());
+
 app.use(authRoutes);
 app.use("/usuarios", usuarioRoutes);
 app.use("/clientes", clienteRoutes);
