@@ -4,7 +4,6 @@ import { z } from "zod";
 import { logAction } from "../utils/logAction";
 
 const prisma = new PrismaClient();
-
 const objectIdRegex = /^[a-f\d]{24}$/i;
 
 const clienteSchema = z.object({
@@ -12,6 +11,7 @@ const clienteSchema = z.object({
   cpf: z.string().regex(/^\d{11}$/, "CPF deve conter 11 dígitos"),
   telefone: z.string().min(8, "Telefone é obrigatório"),
   endereco: z.string().optional(),
+  dataAniversario: z.string().optional(),
 });
 
 export const criarCliente = async (
@@ -29,6 +29,9 @@ export const criarCliente = async (
     const cliente = await prisma.cliente.create({
       data: {
         ...dados,
+        dataAniversario: dados.dataAniversario?.trim()
+          ? new Date(dados.dataAniversario)
+          : undefined,
         usuarioId: req.usuarioId,
       },
     });
@@ -146,9 +149,26 @@ export const atualizarCliente = async (
 
     const dados = clienteSchema.parse(req.body);
 
+    const cpfEmUso = await prisma.cliente.findFirst({
+      where: {
+        cpf: dados.cpf,
+        NOT: { id },
+      },
+    });
+
+    if (cpfEmUso) {
+      res.status(400).json({ erro: "CPF já está em uso por outro cliente" });
+      return;
+    }
+
     const atualizado = await prisma.cliente.update({
       where: { id },
-      data: dados,
+      data: {
+        ...dados,
+        dataAniversario: dados.dataAniversario?.trim()
+          ? new Date(dados.dataAniversario)
+          : undefined,
+      },
     });
 
     await logAction({
