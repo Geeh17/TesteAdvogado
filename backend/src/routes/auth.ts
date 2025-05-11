@@ -33,7 +33,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = jwt.sign(
-      { id: usuario.id, role: usuario.role }, // id agora é string (ObjectId)
+      { id: usuario.id, role: usuario.role },
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" }
     );

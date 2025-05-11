@@ -16,7 +16,6 @@ router.get("/:clienteId", autenticar, listarFichasDoCliente);
 router.get("/:id/pdf", autenticar, async (req, res): Promise<void> => {
   const { id } = req.params;
 
-  // ✅ Validação para ObjectId
   if (!/^[a-f\d]{24}$/i.test(id)) {
     res.status(400).send("ID inválido");
     return;

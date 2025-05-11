@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 interface JwtPayload {
-  id: string; // compatível com MongoDB
+  id: string;
   role: string;
 }
 
@@ -39,7 +39,7 @@ export const autenticar = async (
     }
 
     req.usuario = usuario;
-    req.usuarioId = String(usuario.id); // ✅ conversão explícita
+    req.usuarioId = String(usuario.id);
 
     next();
   } catch (error) {

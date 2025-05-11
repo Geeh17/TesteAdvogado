@@ -11,13 +11,12 @@ import dashboardRoutes from "./routes/dashboard";
 import andamentoRoutes from "./routes/andamentos";
 import compromissoRoutes from "./routes/compromissos";
 import logsRouter from "./routes/logs";
+import aniversariantesRoutes from "./routes/aniversariantes";
 
 const app = express();
 
-// ✅ Lista de origens permitidas (inclui localhost e Netlify)
 const allowedOrigins = ["http://localhost:3001", "https://advotec.netlify.app"];
 
-// ✅ Middleware CORS configurado para aceitar origens definidas acima
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -27,7 +26,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // use true apenas se houver cookies/autenticação
+    credentials: true,
   })
 );
 
@@ -41,6 +40,7 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/andamentos", andamentoRoutes);
 app.use("/compromissos", compromissoRoutes);
 app.use("/logs", logsRouter);
+app.use("/aniversariantes", aniversariantesRoutes);
 
 app.listen(3000, () => {
   console.log("✅ Servidor rodando na porta 3000");

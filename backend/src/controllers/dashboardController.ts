@@ -2,17 +2,20 @@ import { Request, Response } from "express";
 import { prisma } from "../prisma/client";
 import { MongoClient } from "mongodb";
 
-// Opcional: importar da instância atual, se preferir centralizar
 const mongo = new MongoClient(process.env.DATABASE_URL!);
-const db = mongo.db(); // banco padrão do MongoDB Atlas
+const db = mongo.db();
+
+type ResultadoAgregacaoMes = {
+  _id: number;
+  total: number;
+};
 
 export async function getDashboard(req: Request, res: Response) {
   try {
     const totalClientes = await prisma.cliente.count();
     const totalFichas = await prisma.ficha.count();
 
-    // Fichas por mês usando agregação do MongoDB
-    const fichasPorMes = await db
+    const fichasPorMes = (await db
       .collection("Ficha")
       .aggregate([
         {
@@ -24,7 +27,7 @@ export async function getDashboard(req: Request, res: Response) {
         { $sort: { _id: -1 } },
         { $limit: 6 },
       ])
-      .toArray();
+      .toArray()) as ResultadoAgregacaoMes[];
 
     const parsedFichasPorMes = fichasPorMes.map((item) => ({
       mes: item._id,
@@ -44,7 +47,7 @@ export async function getDashboard(req: Request, res: Response) {
 
 export async function getClientesPorMes(req: Request, res: Response) {
   try {
-    const clientesPorMes = await db
+    const clientesPorMes = (await db
       .collection("Cliente")
       .aggregate([
         {
@@ -56,7 +59,7 @@ export async function getClientesPorMes(req: Request, res: Response) {
         { $sort: { _id: -1 } },
         { $limit: 6 },
       ])
-      .toArray();
+      .toArray()) as ResultadoAgregacaoMes[];
 
     const parsedClientesPorMes = clientesPorMes.map((item) => ({
       mes: item._id,
@@ -81,17 +84,19 @@ export async function getRankingAdvogados(req: Request, res: Response) {
     });
 
     const rankingComNomes = await Promise.all(
-      ranking.map(async (item) => {
-        const usuario = await prisma.usuario.findUnique({
-          where: { id: item.usuarioId },
-          select: { nome: true },
-        });
+      ranking.map(
+        async (item: { usuarioId: string; _count: { id: number } }) => {
+          const usuario = await prisma.usuario.findUnique({
+            where: { id: item.usuarioId },
+            select: { nome: true },
+          });
 
-        return {
-          nome: usuario?.nome || `ID ${item.usuarioId}`,
-          total: item._count.id,
-        };
-      })
+          return {
+            nome: usuario?.nome || `ID ${item.usuarioId}`,
+            total: item._count.id,
+          };
+        }
+      )
     );
 
     res.json(rankingComNomes);
